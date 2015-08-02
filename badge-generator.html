@@ -1,0 +1,534 @@
+<!--
+  Copyright (c) 2015 Mountainstorm
+  
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+  
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+  
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+ -->
+ <!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+
+  <style>
+    html, body, .container-fluid, .container-fluid > .row {
+      height: 100%;
+    }
+
+    #layer-col, #shape-list {
+      height: 100%;
+      overflow: scroll;
+    }
+
+    input {
+      width: 40px;
+    }
+
+    #badgeBG {
+      border: 1px solid #888;
+    }
+
+    #text .input-group:not(:last-child) {
+      margin-bottom: 2px;
+    }
+
+    #layers svg {
+      margin-right: 15px;
+    }
+
+    #layers .input-group {
+      width: 100%;
+      padding-bottom: 2px;
+    }
+
+    #layers td {
+      padding-right: 2px;
+    }
+
+    #layers .input-group > * {
+      padding: 2px;
+      line-height: 1;
+      height: 20px;
+    }
+
+    #badge-col .input-group {
+      margin-top: 2px;
+    }
+
+    .file-upload {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .file-upload input {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-size: 20px;
+      cursor: pointer;
+      opacity: 0;
+      filter: alpha(opacity=0);
+    }
+
+    #controls {
+      margin-top: 5px;
+      margin-bottom: 5px;
+    }
+  </style>
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+</head>
+
+<body>
+
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-4" id="badge-col">
+        <h2>Badge Generator <small><a href="https://github.com/mountainstorm">https://github.com/mountainstorm</a></small></h2>
+        <div id="badgeBG">
+          <canvas id="badge" width="400px" height="400px"></canvas>
+        </div>
+        <div class="input-group input-group-sm"><span class="input-group-addon">View over</span><input type="text" id="bgColor" class="form-control" placeholder="Color..." value="#f8f0da"></div>
+      </div>
+      <div class="col-md-4" id="layer-col">
+        <center>
+          <div id="controls" class="btn-group" role="group" aria-label="...">
+            <a id="newBadge" class="btn btn-default btn-sm">New Badge</a>
+            <div id="loadBadge" class="file-upload btn btn-default btn-sm">
+              <span>Load Badge</span>
+              <input type="file">
+            </div>
+            <a id="saveImage" class="btn btn-default btn-sm">Save Image</a>
+            <a id="saveBadge" class="btn btn-default btn-sm">Save Badge</a>
+          </div>
+        </center>
+        <div class="panel panel-default">
+          <div class="panel-heading">Name</div>
+          <div class="panel-body">
+            <div class="input-group input-group-sm"><span class="input-group-addon">Name</span><input id="badgeName" type="text" class="form-control" placeholder="Name..."></div>
+          </div>
+        </div>
+        <div class="panel panel-default">
+          <div class="panel-heading">Layers</div>
+          <div class="panel-body">
+            <ul id="layers" class="list-group sortable"></ul>
+          </div>
+        </div>
+
+      </div>
+      <div class="col-md-4" id="shape-list"></div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+
+  <script src="https://cdn.rawgit.com/eligrey/canvas-toBlob.js/master/canvas-toBlob.js"></script>
+  <script src="https://cdn.rawgit.com/eligrey/FileSaver.js/master/FileSaver.min.js"></script>
+
+  <script src="badge.js"></script>
+  <script>
+    var _badge = null
+
+
+    // layer manipulation code
+    var addLayer = function (badgeLayer) {
+      var $layer = $('<li class="list-group-item clearfix"></li>')
+      var $shape = badgeLayer.$shape
+      $shape.width(50)
+      $shape.height(50)
+      $shape.data('badgeLayer', badgeLayer)
+
+      var $table = $('<table></table>')
+      $table
+        .append('<tr><td></td><td></td><td></td></tr>')
+      $table.find('td').eq(0)
+        .append($shape)
+
+      $table.find('td').eq(1)
+        .append('<div class="input-group input-group-sm"><span class="input-group-addon">Fill</span><input type="text" data-setting="fillColor" class="form-control" placeholder="Color..." value="' + badgeLayer.fillColor + '"></div>')
+        .append('<div class="input-group input-group-sm"><span class="input-group-addon">Stroke</span><input type="text" data-setting="strokeColor" class="form-control" placeholder="Color..." value="' + badgeLayer.strokeColor + '"></div>')
+        .append('<div class="input-group input-group-sm"><span class="input-group-addon">Width</span><input type="text" data-setting="strokeWidth" class="form-control" placeholder="Number..." value="' + badgeLayer.strokeWidth + '"></div>')
+        .append('<div class="input-group input-group-sm"><span class="input-group-addon">Style</span><input type="text" data-setting="strokeStyle" class="form-control" placeholder="Numer Goup..." value="' + badgeLayer.strokeStyle + '"></div>')
+      
+      $table.find('td').eq(2)
+        .append('<div class="input-group input-group-sm"><span class="input-group-addon">Scale</span><input type="text" data-setting="scale" class="form-control" placeholder="Number..." value="' + badgeLayer.scale + '"></div>')
+        .append('<div class="input-group input-group-sm"><span class="input-group-addon">Rot</span><input type="text" data-setting="rotation" class="form-control" placeholder="Number..." value="' + badgeLayer.rotation + '"></div>')
+        .append('<div class="input-group input-group-sm"><span class="input-group-addon">DX</span><input type="text" data-setting="dx" class="form-control" placeholder="Number..." value="' + badgeLayer.dx + '"></div>')
+        .append('<div class="input-group input-group-sm"><span class="input-group-addon">DY</span><input type="text" data-setting="dy" class="form-control" placeholder="Number..." value="' + badgeLayer.dy + '"></div>')
+
+      if (badgeLayer.isText) {
+        var $row = $('<tr><td colspan="2"></td><td></td></tr>')
+        $table.append($row)
+        $row.find('td').eq(0)
+          .append('<div class="input-group input-group-sm"><span class="input-group-addon">Family</span><input type="text" data-setting="fontFamily" class="form-control" placeholder="Family" value="' + badgeLayer.fontFamily + '"></div>')
+          .append('<div class="input-group input-group-sm"><span class="input-group-addon">Size</span><input type="text" data-setting="fontSize" class="form-control" placeholder="Number..." value="' + badgeLayer.fontSize + '"></div>')
+        $row.find('td').eq(1)
+          .append('<div class="input-group input-group-sm"><span class="input-group-addon">Weight</span><input type="text" data-setting="fontWeight" class="form-control" placeholder="Number..." value="' + badgeLayer.fontWeight + '"></div>')
+          .append('<div class="input-group input-group-sm"><span class="input-group-addon">Spacing</span><input type="text" data-setting="letterSpacing" class="form-control" placeholder="Number..." value="' + badgeLayer.letterSpacing + '"></div>')
+      }
+
+      $layer
+        .append('<a href="#" class="close" data-dismiss="alert">&times;</a>')
+        .append($table)
+      $('#layers').append($layer)
+    }
+
+    var updateLayers = function () {
+      var layers = []
+      $('#layers > li svg').each(function () {
+        layers.push($(this).data('badgeLayer'))
+      })
+      _badge.reorder(layers)
+    }
+
+
+
+    // setup/triggers etc
+    $(document).ready(function() {
+      $('.sortable').sortable({
+        update: function () {
+          updateLayers()
+        }
+      });
+
+      $('#bgColor').keyup(function () {
+        $('#badgeBG').css('background', $(this).val())
+      })
+      $('#badgeBG').css('background', $('#bgColor').val())
+
+      $('#badgeName').blur(function () {
+        _badge.name = $(this).val()
+      })
+
+      $('#newBadge').click(function () {
+        $('#layers').empty()
+        new Badge({}, 900, '#badge', function (badge) {
+          _badge = badge
+          badge.render()
+        })
+      })
+
+      $('#loadBadge').on('change', function (e) {
+        console.log('on change')
+        var f = $('#loadBadge input')[0].files[0]
+        console.log(f)
+        fileReader = new FileReader()
+        fileReader.onload = function(e) {
+          var settings = JSON.parse(e.target.result)
+          $('#layers').empty()
+          new Badge(settings, 900, '#badge', function (badge) {
+            _badge = badge
+            $.each(badge.layers, function (idx, badgeLayer) {
+              addLayer(badgeLayer)
+            })
+            $('#badgeName').val(badge.name)
+          })
+        };
+        fileReader.readAsText(f)
+      })
+
+      $('#saveBadge').click(function () {
+        var link = this
+        var settings = _badge.settings()
+        var json = JSON.stringify(settings)
+        var blob = new Blob([json], {type: 'application/json'})
+        saveAs(blob, _badge.name + '.json')
+      })
+
+      $('#saveImage').click(function () {
+        var link = this
+        $('#badge')[0].toBlob(function (blob) {
+          saveAs(blob, _badge.name + '.png')
+        })
+      })
+
+      $(document).on('keyup', '#layers input', function () {
+        // something changed; update layers
+        var $input = $(this)
+        var $li = $input.parents('li')
+        var badgeLayer = $li.find('svg').data('badgeLayer')
+        if (badgeLayer) {
+          badgeLayer.setting($input.data('setting'), $input.val(), function () {
+            _badge.render()
+          })
+        }
+      })
+
+      $(document).on('click', '#layers .close', function (ev) {
+        var $li = $(ev.target).parents('li')
+        var badgeLayer = $li.find('svg').data('badgeLayer')
+        _badge.remove(badgeLayer)
+        $li.remove()
+      })
+
+      // load initial settings
+      new Badge(
+{
+    "name": "ChessChamp",
+    "layers": [
+        {
+            "url": "shapes/Wings/5.svg",
+            "fillColor": "#bd3744",
+            "strokeColor": "none",
+            "strokeWidth": 1,
+            "strokeStyle": "none",
+            "scale": 1,
+            "rotation": 0,
+            "dx": 0,
+            "dy": 0,
+            "fontSize": 55,
+            "fontFamily": "Times New Roman",
+            "fontWeight": "normal",
+            "letterSpacing": "normal"
+        },
+        {
+            "url": "shapes/Photoshop/Circle.svg",
+            "fillColor": "#3c434d",
+            "strokeColor": "none",
+            "strokeWidth": 1,
+            "strokeStyle": "none",
+            "scale": "0.6",
+            "rotation": "0",
+            "dx": 0,
+            "dy": 0,
+            "fontSize": 55,
+            "fontFamily": "Times New Roman",
+            "fontWeight": "normal",
+            "letterSpacing": "normal"
+        },
+        {
+            "url": "shapes/Gears/Gear Base 36 - www.Shapes4FREE.com.svg",
+            "fillColor": "#f8f0da",
+            "strokeColor": "none",
+            "strokeWidth": 1,
+            "strokeStyle": "none",
+            "scale": "0.58",
+            "rotation": "0",
+            "dx": 0,
+            "dy": 0,
+            "fontSize": 55,
+            "fontFamily": "Times New Roman",
+            "fontWeight": "normal",
+            "letterSpacing": "normal"
+        },
+        {
+            "url": "shapes/Photoshop/Circle.svg",
+            "fillColor": "#3c434d",
+            "strokeColor": "none",
+            "strokeWidth": 1,
+            "strokeStyle": "none",
+            "scale": "0.55",
+            "rotation": "0",
+            "dx": 0,
+            "dy": 0,
+            "fontSize": 55,
+            "fontFamily": "Times New Roman",
+            "fontWeight": "normal",
+            "letterSpacing": "normal"
+        },
+        {
+            "url": "shapes/Photoshop/Circle.svg",
+            "fillColor": "#f8f0da",
+            "strokeColor": "none",
+            "strokeWidth": 1,
+            "strokeStyle": "none",
+            "scale": "0.535",
+            "rotation": "0",
+            "dx": 0,
+            "dy": 0,
+            "fontSize": 55,
+            "fontFamily": "Times New Roman",
+            "fontWeight": "normal",
+            "letterSpacing": "normal"
+        },
+        {
+            "url": "shapes/Photoshop/Circle.svg",
+            "fillColor": "#3c434d",
+            "strokeColor": "none",
+            "strokeWidth": 1,
+            "strokeStyle": "none",
+            "scale": "0.530",
+            "rotation": "0",
+            "dx": 0,
+            "dy": 0,
+            "fontSize": 55,
+            "fontFamily": "Times New Roman",
+            "fontWeight": "normal",
+            "letterSpacing": "normal"
+        },
+        {
+            "url": "shapes/Photoshop/Circle.svg",
+            "fillColor": "#f8f0da",
+            "strokeColor": "none",
+            "strokeWidth": 1,
+            "strokeStyle": "none",
+            "scale": "0.4",
+            "rotation": "0",
+            "dx": 0,
+            "dy": 0,
+            "fontSize": 55,
+            "fontFamily": "Times New Roman",
+            "fontWeight": "normal",
+            "letterSpacing": "normal"
+        },
+        {
+            "url": "shapes/Photoshop/Crown 5.svg",
+            "fillColor": "#bd3744",
+            "strokeColor": "#3c434d",
+            "strokeWidth": "1",
+            "strokeStyle": "none",
+            "scale": "0.3",
+            "rotation": "0",
+            "dx": 0,
+            "dy": "-1",
+            "fontSize": 55,
+            "fontFamily": "Times New Roman",
+            "fontWeight": "normal",
+            "letterSpacing": "normal"
+        },
+        {
+            "url": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20viewBox%3D%220%200%20500%20500%22%3E%20%20%3Cdefs%3E%20%20%20%20%20%20%3Cpath%20id%3D%22textPath%22%20d%3D%22M0%2C250%20a1%2C1%200%201%2C1%20500%2C0%22%20%2F%3E%20%20%3C%2Fdefs%3E%20%20%3Ctext%20x%3D%220%22%20y%3D%220%22%3E%20%20%20%20%3CtextPath%20xlink%3Ahref%3D%22%23textPath%22%20%3E%20%20%20%20%20%20Chess%20Master%20%20%20%20%3C%2FtextPath%3E%20%20%3C%2Ftext%3E%3C%2Fsvg%3E",
+            "fillColor": "#f8f0da",
+            "strokeColor": "none",
+            "strokeWidth": 1,
+            "strokeStyle": "none",
+            "scale": "0.415",
+            "rotation": "55",
+            "dx": "0",
+            "dy": 0,
+            "fontSize": 55,
+            "fontFamily": "Times New Roman",
+            "fontWeight": "normal",
+            "letterSpacing": "normal"
+        }
+    ]
+}
+        , 900, '#badge', function (badge) {
+        _badge = badge
+        $.each(badge.layers, function (idx, badgeLayer) {
+              addLayer(badgeLayer)
+        })
+        $('#badgeName').val(badge.name)
+      })
+    })
+
+
+    // add the text dialogs
+    var $text = $('<div class="panel panel-default" id="text">' +
+    '  <div class="panel-heading">Text</div>' +
+    '  <div class="panel-body">' + 
+'<div class="input-group input-group-sm"><span class="input-group-addon">Anticlockwise</span><input type="text" class="form-control" placeholder="Text..."><span class="input-group-btn"><button id="anticlockwise" class="btn btn-default" type="button">Add</button></span></div>' +
+'<div class="input-group input-group-sm"><span class="input-group-addon">Clockwise</span><input type="text" class="form-control" placeholder="Text..."><span class="input-group-btn"><button id="clockwise" class="btn btn-default" type="button">Add</button></span></div>' +
+'<div class="input-group input-group-sm"><span class="input-group-addon">Horizontal</span><input type="text" class="form-control" placeholder="Text..."><span class="input-group-btn"><button id="horizontal" class="btn btn-default" type="button">Add</button></span></div>' +
+    '  </div>' +
+    '</div>')
+    $('#shape-list').append($text)
+
+    $('#anticlockwise, #clockwise').click(function () {
+      var dir = '0,0'
+      if ($(this).attr('id') == 'clockwise') {
+        dir = '1,1'
+      }
+      var url = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 500 500">' +
+'  <defs>' +
+'      <path id="textPath" d="M0,250 a1,1 0 ' + dir + ' 500,0" />' +
+'  </defs>' +
+'  <text x="0" y="0">' +
+'    <textPath xlink:href="#textPath" >' +
+'      ' + $(this).parents('.input-group').find('input').val() + '' +
+'    </textPath>' +
+'  </text>' +
+'</svg>')
+      _badge.add({ url: url }, function (badgeLayer) {
+        addLayer(badgeLayer)
+      })
+    })
+
+    $('#horizontal').click(function () {
+      var url = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 500 500">' +
+'  <text x="250" y="250"  font-family="Verdana" font-size="55" text-anchor="middle">' +
+'      ' + $(this).parents('.input-group').find('input').val() + '' +
+'  </text>' +
+'</svg>')
+      _badge.add({ url: url }, function (badgeLayer) {
+        addLayer(badgeLayer)
+      })
+    })
+
+    // load the library
+    $.get('shapes.json', function(groups) {
+      $.each(groups, function (idx, group) {
+        var license = ''
+        if (group.license) {
+          license = '<a class="btn btn-xs btn-default pull-right" data-toggle="modal" data-target="#licenseModal' + idx + '">license</a>'
+          license += 
+'<!-- Modal -->' +
+'<div class="modal fade" id="licenseModal' + idx + '" tabindex="-1" role="dialog">' +
+'  <div class="modal-dialog" role="document">' +
+'    <div class="modal-content">' +
+'      <div class="modal-header">' +
+'        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
+'        <h4 class="modal-title">License for "' + group.title + '"</h4>' +
+'      </div>' +
+'      <div class="modal-body"><pre>' +
+        group.license +
+'      </pre></div>' +
+'      <div class="modal-footer">' +
+'        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>' +
+'        <button type="button" class="btn btn-primary">Save changes</button>' +
+'      </div>' +
+'    </div>' +
+'  </div>' +
+'</div>'
+        }
+        var $panel = $(
+'<div class="panel panel-default">' +
+'  <div class="panel-heading">' + group.title + license + '</div>' +
+'  <div class="panel-body"></div>' +
+'</div>')
+        var $body = $panel.find('.panel-body')
+        $.each(group.shapes, function (idx, url) {
+          loadShape(url, function ($shape) {
+            $shape.width(50)
+            $shape.height(50)
+            $body.append($shape)
+            $shape.select('path').click(function () {
+              // we're adding - so create the new layer, and link it up
+              _badge.add({ url: url }, function (badgeLayer) {
+                addLayer(badgeLayer)
+              })
+            })
+          })
+        })
+        $('#shape-list').append($panel)
+      })
+    }, 'json')
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+    "name": "TestBadge",
+    "layers": [
+        {
+            "url": "shapes/Flowers/Flower 11 - www.Shapes4FREE.com.svg",
+            "fillColor": "#f09",
+            "strokeColor": "none",
+            "strokeWidth": 1,
+            "strokeStyle": "none",
+            "scale": 1,
+            "rotation": 0,
+            "dx": 0,
+            "dy": 0
+        }
+    ]
+}

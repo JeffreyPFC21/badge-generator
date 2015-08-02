@@ -1,0 +1,93 @@
+{
+    "name": "something",
+    "layers": [
+        {
+            "url": "shapes/Wings/5.svg",
+            "fillColor": "#bd3744",
+            "strokeColor": "none",
+            "strokeWidth": 1,
+            "strokeStyle": "none",
+            "scale": 1,
+            "rotation": 0,
+            "dx": 0,
+            "dy": 0
+        },
+        {
+            "url": "shapes/Photoshop/Circle.svg",
+            "fillColor": "#3c434d",
+            "strokeColor": "none",
+            "strokeWidth": 1,
+            "strokeStyle": "none",
+            "scale": "0.6",
+            "rotation": "0",
+            "dx": 0,
+            "dy": 0
+        },
+        {
+            "url": "shapes/Gears/Gear Base 36 - www.Shapes4FREE.com.svg",
+            "fillColor": "#f8f0da",
+            "strokeColor": "none",
+            "strokeWidth": 1,
+            "strokeStyle": "none",
+            "scale": "0.58",
+            "rotation": "0",
+            "dx": 0,
+            "dy": 0
+        },
+        {
+            "url": "shapes/Photoshop/Circle.svg",
+            "fillColor": "#3c434d",
+            "strokeColor": "none",
+            "strokeWidth": 1,
+            "strokeStyle": "none",
+            "scale": "0.55",
+            "rotation": "0",
+            "dx": 0,
+            "dy": 0
+        },
+        {
+            "url": "shapes/Photoshop/Circle.svg",
+            "fillColor": "#f8f0da",
+            "strokeColor": "none",
+            "strokeWidth": 1,
+            "strokeStyle": "none",
+            "scale": "0.535",
+            "rotation": "0",
+            "dx": 0,
+            "dy": 0
+        },
+        {
+            "url": "shapes/Photoshop/Circle.svg",
+            "fillColor": "#3c434d",
+            "strokeColor": "none",
+            "strokeWidth": 1,
+            "strokeStyle": "none",
+            "scale": "0.530",
+            "rotation": "0",
+            "dx": 0,
+            "dy": 0
+        },
+        {
+            "url": "shapes/Photoshop/Circle.svg",
+            "fillColor": "#f8f0da",
+            "strokeColor": "none",
+            "strokeWidth": 1,
+            "strokeStyle": "none",
+            "scale": "0.4",
+            "rotation": "0",
+            "dx": 0,
+            "dy": 0
+        },
+        {
+            "url": "shapes/Photoshop/Crown 5.svg",
+            "fillColor": "#bd3744",
+            "strokeColor": "#3c434d",
+            "strokeWidth": "1",
+            "strokeStyle": "none",
+            "scale": "0.3",
+            "rotation": "0",
+            "dx": 0,
+            "dy": "-1"
+        }
+    ]
+}
